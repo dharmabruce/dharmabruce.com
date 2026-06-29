@@ -1,0 +1,13 @@
+# The apex + www Routes reference the cert-manager-issued secret via
+# spec.tls.externalCertificate, which requires the ingress router's service
+# account to be able to read (and watch for renewals) exactly that secret.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: router-read-dharmabruce-com-tls
+  namespace: dharmabruce
+rules:
+  - apiGroups: [""]
+    resources: [secrets]
+    resourceNames: [dharmabruce-com-tls]
+    verbs: [get, list, watch]

@@ -1,0 +1,91 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wordpress
+  namespace: dharmabruce
+  labels:
+    app: wordpress
+    owner: platform
+  annotations:
+    email: sean@vaughan.cc
+spec:
+  replicas: 1
+  # Recreate: wordpress-html is RWO; a rolling update would deadlock on the volume.
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: wordpress
+  template:
+    metadata:
+      labels:
+        app: wordpress
+    spec:
+      restartPolicy: Always
+      serviceAccountName: wordpress
+      containers:
+        - name: wordpress
+          # Official WordPress image; the entrypoint generates wp-config.php
+          # from the WORDPRESS_* env on first boot and never overwrites an
+          # existing install on the PVC.
+          image: wordpress:7.0-php8.3-apache
+          ports:
+            - containerPort: 80
+              name: http
+          env:
+            - name: WORDPRESS_DB_HOST
+              value: mariadb
+            - name: WORDPRESS_DB_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: dharmabruce-db
+                  key: MYSQL_DATABASE
+            - name: WORDPRESS_DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: dharmabruce-db
+                  key: MYSQL_USER
+            - name: WORDPRESS_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: dharmabruce-db
+                  key: MYSQL_PASSWORD
+            # Edge-terminated Route speaks HTTP to the pod; tell WordPress it
+            # is really HTTPS (so it builds https:// URLs and does not redirect-
+            # loop), and pin the canonical site URL to the apex host. Requests
+            # to www.dharmabruce.com then 301 to the apex via WP's canonical
+            # redirect. Remove WP_HOME/WP_SITEURL here only if you later want to
+            # manage the URL from the database (Settings → General) instead.
+            - name: WORDPRESS_CONFIG_EXTRA
+              value: |
+                if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
+                    $_SERVER['HTTPS'] = 'on';
+                }
+                define('WP_HOME', 'https://dharmabruce.com');
+                define('WP_SITEURL', 'https://dharmabruce.com');
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: "2"
+              memory: 1Gi
+          readinessProbe:
+            httpGet:
+              path: /wp-includes/images/blank.gif
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /wp-includes/images/blank.gif
+              port: 80
+            initialDelaySeconds: 30
+            periodSeconds: 20
+          volumeMounts:
+            - name: html
+              mountPath: /var/www/html
+      volumes:
+        - name: html
+          persistentVolumeClaim:
+            claimName: wordpress-html

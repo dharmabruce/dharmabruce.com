@@ -1,0 +1,21 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: dharmabruce
+
+resources:
+  - namespace.yaml
+  - service-account.yaml
+  - role-binding-anyuid.yaml
+  - certificate.yaml
+  - router-cert-role.yaml
+  - router-cert-role-binding.yaml
+  - sealed-db-secret.yaml
+  - mariadb-pvc.yaml
+  - mariadb-deployment.yaml
+  - mariadb-service.yaml
+  - wordpress-pvc.yaml
+  - wordpress-deployment.yaml
+  - wordpress-service.yaml
+  - route.yaml
+  - route-www.yaml

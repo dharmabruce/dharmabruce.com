@@ -1,0 +1,24 @@
+# www host. Terminates TLS with the same dharmabruce-com-tls cert (www is a
+# SAN on it) so the redirect itself is served over valid HTTPS, then
+# WordPress's canonical redirect 301s www.dharmabruce.com → the apex
+# (WP_HOME/WP_SITEURL pin the apex in wordpress-deployment.yaml).
+# www is a subdomain, so its GoDaddy DNS may be a CNAME to the apex.
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: dharmabruce-com-www
+  namespace: dharmabruce
+  labels:
+    app: wordpress
+spec:
+  host: www.dharmabruce.com
+  to:
+    kind: Service
+    name: wordpress
+  port:
+    targetPort: http
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+    externalCertificate:
+      name: dharmabruce-com-tls

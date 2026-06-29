@@ -1,0 +1,25 @@
+# Canonical public host (apex). TLS terminates at the router with the
+# Let's Encrypt certificate issued by certificate.yaml. dharmabruce.com is a
+# zone apex, so its DNS must be an A record at GoDaddy pointing at the home
+# public IP that fronts the cluster ingress (apex cannot CNAME — see README
+# DDNS caveat). cert-manager renews the secret; the router picks up renewals
+# via externalCertificate.
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: dharmabruce-com
+  namespace: dharmabruce
+  labels:
+    app: wordpress
+spec:
+  host: dharmabruce.com
+  to:
+    kind: Service
+    name: wordpress
+  port:
+    targetPort: http
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+    externalCertificate:
+      name: dharmabruce-com-tls

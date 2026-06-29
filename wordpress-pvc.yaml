@@ -1,0 +1,15 @@
+# Holds the full WordPress docroot (/var/www/html): core, plugins, themes,
+# and wp-content/uploads. This is a fresh install (the source is the
+# dharmabruce.blogspot.com Blogger blog, imported via WXR — see README),
+# so it starts small; sized for headroom as media is sideloaded on import.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: wordpress-html
+  namespace: dharmabruce
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi

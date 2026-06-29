@@ -1,0 +1,17 @@
+# The official wordpress image starts Apache as root (binds port 80, then
+# drops to www-data). Grant anyuid to the wordpress ServiceAccount only —
+# same SCC mechanism as sources/sealed-secrets, but namespace-scoped.
+# MariaDB runs under the default restricted SCC with an arbitrary UID.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: wordpress-anyuid-scc
+  namespace: dharmabruce
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system:openshift:scc:anyuid
+subjects:
+  - kind: ServiceAccount
+    name: wordpress
+    namespace: dharmabruce

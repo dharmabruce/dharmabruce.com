@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mariadb
+  namespace: dharmabruce
+  labels:
+    app: mariadb
+    owner: platform
+  annotations:
+    email: sean@vaughan.cc
+spec:
+  replicas: 1
+  # Recreate: mariadb-data is RWO; a rolling update would deadlock on the volume.
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: mariadb
+  template:
+    metadata:
+      labels:
+        app: mariadb
+    spec:
+      restartPolicy: Always
+      serviceAccountName: mariadb
+      containers:
+        - name: mariadb
+          # rhel9 sclorg-style image: runs as arbitrary UID under the
+          # restricted SCC, listens on 3306, data under /var/lib/mysql/data.
+          image: registry.redhat.io/rhel9/mariadb-1011:1
+          ports:
+            - containerPort: 3306
+              name: mariadb
+          envFrom:
+            - secretRef:
+                name: dharmabruce-db
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
+          readinessProbe:
+            tcpSocket:
+              port: 3306
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: 3306
+            initialDelaySeconds: 30
+            periodSeconds: 20
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/mysql/data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: mariadb-data

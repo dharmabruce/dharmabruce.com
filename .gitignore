@@ -1,0 +1,4 @@
+# migration artifacts (content lands in WordPress, not git)
+*.wxr
+blogger-takeout/
+takeout-*.zip

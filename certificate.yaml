@@ -1,0 +1,22 @@
+# Let's Encrypt certificate for the public hosts. dharmabruce.com DNS lives
+# at GoDaddy (not Route53), so this issues via the letsencrypt-prod
+# ClusterIssuer's HTTP-01 fallback solver — the same path mountainheart.net
+# uses. HTTP-01 validation can only succeed once the names resolve to this
+# cluster's ingress (see README — cutover); until then the Certificate stays
+# Pending and cert-manager keeps retrying, then issues automatically.
+# One cert, two SANs: the apex (canonical) plus www, which 301s to the apex.
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: dharmabruce-com-tls
+  namespace: dharmabruce
+  labels:
+    app: wordpress
+spec:
+  secretName: dharmabruce-com-tls
+  dnsNames:
+    - dharmabruce.com
+    - www.dharmabruce.com
+  issuerRef:
+    kind: ClusterIssuer
+    name: letsencrypt-prod
