@@ -28,7 +28,7 @@ spec:
           # Official WordPress image; the entrypoint generates wp-config.php
           # from the WORDPRESS_* env on first boot and never overwrites an
           # existing install on the PVC.
-          image: wordpress:7.0-php8.3-apache
+          image: wordpress:7.1-php8.3-apache
           ports:
             - containerPort: 80
               name: http
